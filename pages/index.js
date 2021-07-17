@@ -2,6 +2,9 @@ import React from 'react';
 import styled from 'styled-components';
 import MainGrid from '../src/components/MainGrid';
 import Box from '../src/components/Box';
+import nookies from 'nookies';
+import jwt from 'jsonwebtoken';
+
 import {AlurakutMenu, AlurakutProfileSidebarMenuDefault, OrkutNostalgicIconSet} from '../src/lib/AluraKutCommons';
 import { ProfileRelationsBoxWrapper } from '../src/components/ProfileRelations';
 
@@ -44,9 +47,9 @@ function ProfileRelationsBox(propriedades){
   )
 }
 
-export default function Home() {
+export default function Home(props) {
   
-  const usuarioAleatorio= 'rodrigoschonardt';
+  const usuarioAleatorio= props.githubUser;
   const [comunidades, setComunidades]= React.useState([{
     id: '1231231231231',
     title: 'Eu odeio acordar cedo',
@@ -208,4 +211,31 @@ export default function Home() {
       </MainGrid>
     </>
   )
+}
+
+export async function getServerSideProps(context){
+    const cookies = nookies.get(context);
+    const token= cookies.USER_TOKEN;
+    const { isAuthenticated } = await fetch('https://alurakut.vercel.app/api/auth', {
+    headers: {
+        Authorization: token
+      }
+    })
+    .then((resposta) => resposta.json())
+
+    if(!isAuthenticated) {
+      return {
+        redirect: {
+          destination: '/login',
+          permanent: false,
+        }
+      }
+    }
+    const {githubUser} =  jwt.decode(token);
+    console.log('token decodificado');
+    return{
+      props:{
+        githubUser
+    },
+  }
 }
